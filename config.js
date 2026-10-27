@@ -2,6 +2,6 @@
 // url = "Project URL"; key = kunci PUBLIK ("anon" atau "publishable").
 // JANGAN PERNAH memasukkan kunci "service_role" / "secret" di sini.
 window.CFG = {
-  url: 'https://ISI-PROJECT-ID-ANDA.supabase.co',
-  key: 'ISI-KUNCI-PUBLIK-ANDA'
+  url: 'https://XXXXXXXX.supabase.co',
+  key: 'sb_publishable_XXXXXXXX'
 };

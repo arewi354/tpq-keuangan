@@ -131,7 +131,7 @@ SEC.br = async () => {
   sec().onclick = async e => { const b = e.target.closest('button[data-id]'); if (b && confirm('Nonaktifkan aturan ini?')) await act(b, () => call(sb.from('evidence_rules').update({ is_active: false }).eq('id', b.dataset.id)), 'Aturan dinonaktifkan.', SEC.br) };
 };
 // ---------- Admin: kelola akun (lewat fungsi server "kelola-akun") ----------
-const inv = async body => { const { data, error } = await sb.functions.invoke('kelola-akun', { body });
+const inv = async body => { const { data, error } = await sb.functions.invoke(CFG.fn || 'kelola-akun', { body });
   if (error) { let m = error.message; try { m = (await error.context.json()).error || m } catch (_) {} throw new Error(m) }
   if (data && data.error) throw new Error(data.error); return data };
 const showPw = r => { $('#pw').innerHTML = `<div class="cd"><b>Catat sekarang, hanya tampil sekali</b><br>Nama pengguna: <b>${esc(r.username)}</b><br>Kata sandi sementara: <b>${esc(r.temp_password)}</b><div class="k">Serahkan langsung kepada orangnya. Ia wajib menggantinya saat masuk pertama kali.</div></div>`; $('#pw').scrollIntoView() };

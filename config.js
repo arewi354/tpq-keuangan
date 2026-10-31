@@ -2,6 +2,7 @@
 // url = "Project URL"; key = kunci PUBLIK ("anon" atau "publishable").
 // JANGAN PERNAH memasukkan kunci "service_role" / "secret" di sini.
 window.CFG = {
-  url: 'https://rgooomppkbmejaetzspn.supabase.co',
+  url: 'https://rgooompkbmejaetzspn.supabase.co',
   key: 'sb_publishable_h7kqPNuA5448OZL46GZaAA_52cUyddn'
+  fn: 'smooth-service'
 };

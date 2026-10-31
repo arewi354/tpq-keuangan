@@ -40,6 +40,12 @@
   L.backupState = (row, nowMs) => { if (!row) return { bad: true, text: 'Belum ada cadangan tercatat.' };
     const h = (nowMs - new Date(row.run_at).getTime()) / 3600e3;
     return row.status !== 'ok' ? { bad: true, text: 'Cadangan terakhir GAGAL. Hubungi admin.' } : h > 48 ? { bad: true, text: 'Cadangan terakhir sudah ' + Math.floor(h / 24) + ' hari lalu. Periksa pekerjaan cadangan.' } : { bad: false, text: 'Cadangan terakhir berhasil.' } };
+  L.makeUsername = (name, taken) => {          // nama pengguna sah: huruf kecil/angka, 3-20 karakter, unik
+    let b = String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20);
+    if (b.length < 3) b = (b + 'tpq').slice(0, 20);
+    let u = b, n = 2; while (taken.has(u)) u = b.slice(0, 18) + n++;
+    taken.add(u); return u;
+  };
   L.kas = rows => rows.filter(r => r.kind !== 'usaha');   // laporan kas tidak memuat dana usaha
   if (typeof module !== 'undefined') module.exports = L; else root.L = L;
 })(this);

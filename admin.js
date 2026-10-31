@@ -136,10 +136,22 @@ const inv = async body => { const { data, error } = await sb.functions.invoke('k
   if (data && data.error) throw new Error(data.error); return data };
 const showPw = r => { $('#pw').innerHTML = `<div class="cd"><b>Catat sekarang, hanya tampil sekali</b><br>Nama pengguna: <b>${esc(r.username)}</b><br>Kata sandi sementara: <b>${esc(r.temp_password)}</b><div class="k">Serahkan langsung kepada orangnya. Ia wajib menggantinya saat masuk pertama kali.</div></div>`; $('#pw').scrollIntoView() };
 SEC.akun = async () => {
-  const ps = await call(sb.from('profiles').select('id,username,full_name,role,is_active,must_change_password').order('role').order('username'));
+  let pend = [];
+  const ps = await call(sb.from('profiles').select('id,username,full_name,role,is_active,must_change_password,member_id').order('role').order('username'));
   sec().innerHTML = '<p class="k">Batas: 2 admin aktif, 2 bendahara aktif; pengurus minimal 5. Setiap orang memakai akun sendiri.</p>' +
     ps.map(p => `<div class="cd"><b>${esc(p.full_name)}</b> · ${esc(p.username)}<div class="k">${p.role}${p.is_active ? '' : ' · NONAKTIF'}${p.must_change_password ? ' · belum ganti kata sandi' : ''}</div><div class="row"><button class="s" data-k="rs" data-id="${p.id}">Atur ulang kata sandi</button><button class="s" data-k="ac" data-id="${p.id}" data-a="${p.is_active ? 0 : 1}">${p.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button></div></div>`).join('') +
-    '<h3>Buat akun baru</h3>' + F([{ id: 'u', l: 'Nama pengguna (huruf kecil, angka; contoh: rama)', a: 'autocapitalize="none"' }, { id: 'n', l: 'Nama lengkap' }, { id: 'r', l: 'Peran', t: 'select', o: [['pengurus', 'Pengurus / pemantau'], ['bendahara', 'Bendahara'], ['admin', 'Admin']] }]) + '<button id="go">Buat akun</button><div id="pw"></div>';
+    (() => { const have = new Set(ps.filter(p => p.member_id).map(p => p.member_id)); pend = S.members.filter(m => !m.inactive_from && !have.has(m.id));
+      return '<h3>Akun pengamat untuk semua anggota</h3><p class="k">Pengamat hanya bisa melihat, tidak bisa mengubah apa pun. Satu akun per anggota aktif. ' + pend.length + ' anggota belum punya akun.</p>' + (pend.length ? `<button id="bk">Buat akun untuk ${pend.length} anggota</button>` : '') + '<div id="bo"></div>' })() +
+    '<h3>Buat akun baru</h3>' + F([{ id: 'u', l: 'Nama pengguna (huruf kecil, angka; contoh: rama)', a: 'autocapitalize="none"' }, { id: 'n', l: 'Nama lengkap' }, { id: 'r', l: 'Peran', t: 'select', o: [['pengurus', 'Pengamat / pengurus (hanya melihat)'], ['bendahara', 'Bendahara'], ['admin', 'Admin']] }]) + '<button id="go">Buat akun</button><div id="pw"></div>';
+  const showBulk = out => { $('#bo').innerHTML = `<div class="cd"><b>Catat sekarang, hanya tampil sekali (${out.length} akun)</b><div class="sc"><table><tr><th>Nama</th><th>Nama pengguna</th><th>Kata sandi sementara</th></tr>${out.map(o => `<tr><td>${esc(o.nama)}</td><td>${esc(o.username)}</td><td><b>${esc(o.sandi)}</b></td></tr>`).join('')}</table></div><button class="s" id="bx">Unduh daftar (Excel)</button><div class="k">Bagikan sandi langsung kepada tiap orang, lalu hapus berkas dari HP. Semua wajib mengganti sandi saat masuk pertama.</div></div>`;
+    $('#bx').onclick = () => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Nama', 'Nama pengguna', 'Kata sandi sementara']].concat(out.map(o => [o.nama, o.username, o.sandi]))), 'Akun'); XLSX.writeFile(wb, `akun-pengamat-${L.todayWIB()}.xlsx`) } };
+  if (pend.length) $('#bk').onclick = e => act(e.target, async () => {
+    if (!confirm(`Buat ${pend.length} akun pengamat? Kata sandi sementara ditampilkan sekali.`)) throw new Error('Dibatalkan.');
+    const taken = new Set(ps.map(p => p.username)), out = [];
+    for (const m of pend) { $('#bo').insertAdjacentHTML('afterbegin', ''); const u = L.makeUsername(m.name, taken);
+      const r = await inv({ action: 'create', username: u, full_name: m.name, role: 'pengurus', member_id: m.id });
+      out.push({ nama: m.name, username: r.username, sandi: r.temp_password }); showBulk(out) }
+  }, 'Selesai. Catat daftar kata sandi.');
   $('#go').onclick = e => act(e.target, async () => { showPw(await inv({ action: 'create', username: G('u').toLowerCase(), full_name: G('n'), role: G('r') })) }, 'Akun dibuat.');
   sec().onclick = async e => { const b = e.target.closest('button[data-k]'); if (!b) return;
     if (b.dataset.k === 'rs') { if (confirm('Atur ulang kata sandi akun ini?')) await act(b, async () => showPw(await inv({ action: 'reset', user_id: b.dataset.id })), 'Kata sandi diatur ulang.') }
